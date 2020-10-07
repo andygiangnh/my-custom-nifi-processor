@@ -28,6 +28,7 @@ import org.apache.nifi.annotation.lifecycle.OnScheduled;
 import org.apache.nifi.annotation.documentation.CapabilityDescription;
 import org.apache.nifi.annotation.documentation.SeeAlso;
 import org.apache.nifi.annotation.documentation.Tags;
+import org.apache.nifi.logging.ComponentLog;
 import org.apache.nifi.processor.exception.ProcessException;
 import org.apache.nifi.processor.AbstractProcessor;
 import org.apache.nifi.processor.ProcessContext;
@@ -55,6 +56,8 @@ import java.util.Set;
 @ReadsAttributes({@ReadsAttribute(attribute="", description="")})
 @WritesAttributes({@WritesAttribute(attribute="", description="")})
 public class MyHMACSha256 extends AbstractProcessor {
+
+    private ComponentLog logger;
 
     public static final PropertyDescriptor SECRET = new PropertyDescriptor
             .Builder().name("Secret Key")
@@ -88,6 +91,7 @@ public class MyHMACSha256 extends AbstractProcessor {
         relationships.add(REL_SUCCESS);
         relationships.add(REL_FAILURE);
         this.relationships = Collections.unmodifiableSet(relationships);
+        logger = getLogger();
     }
 
     @Override
@@ -124,6 +128,7 @@ public class MyHMACSha256 extends AbstractProcessor {
         }
         catch (Exception e){
             session.transfer(flowFile, REL_FAILURE);
+            logger.debug("Something went wrong", e);
         }
 
         flowFile = session.write(flowFile, new StreamCallback() {
@@ -136,6 +141,7 @@ public class MyHMACSha256 extends AbstractProcessor {
         if (flowFile == null) {
             return;
         }
+        logger.info("Successfully HmacSHA256");
         session.transfer(flowFile, REL_SUCCESS); // Transfer the output flowfile to success relationship.
     }
 }
